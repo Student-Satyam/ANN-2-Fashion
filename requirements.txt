@@ -1,5 +1,5 @@
-streamlit                      ### Web frontend
-tensorflow                     ### ANN model training & prediction
-numpy                           ### Array and numerical processing
-pillow                          ### Image processing
-streamlit-drawable-canvas       ### Canvas to draw fashion items
+streamlit
+streamlit-drawable-canvas
+tensorflow
+numpy
+pillow

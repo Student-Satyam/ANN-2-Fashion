@@ -1,53 +1,54 @@
-import streamlit as st                                ### Streamlit → Web app UI
-import tensorflow as tf                               ### Load trained ANN model
-from tensorflow.keras.models import load_model        ### For loading saved .h5 model
-import numpy as np                                    ### Convert image into numeric format
-from PIL import Image                                 ### For image processing
-from streamlit_drawable_canvas import st_canvas       ### Drawing canvas
+import streamlit as st
+import tensorflow as tf
+import numpy as np
+from streamlit_drawable_canvas import st_canvas
+from PIL import Image
 
-# Load trained Fashion model
-model = load_model("fashion_ann_model.h5")            ### Load your trained model file
+# ✅ Load trained model (.keras)
+model = tf.keras.models.load_model("fashion_ann_model.keras")
 
-# Label names for Fashion MNIST
-fashion_labels = ["T-shirt/top", "Trouser", "Pullover", "Dress", "Coat",
-                  "Sandal", "Shirt", "Sneaker", "Bag", "Ankle Boot"]
+# ✅ Class names for Fashion MNIST
+class_names = [
+    "T-shirt/top", "Trouser", "Pullover", "Dress", "Coat",
+    "Sandal", "Shirt", "Sneaker", "Bag", "Ankle boot"
+]
 
-# Title
+# ✅ Streamlit page setup
+st.set_page_config(page_title="🖌️ Fashion Classifier", layout="centered")
 
-st.title("👗👜 Fashion Item Recognizer (ANN) - By Satyam")
+st.title("👕 Draw a Fashion Item")
+st.write("Draw a clothing item below (like a shoe, shirt, or bag) and the model will predict what it is!")
 
-st.write("✍️ Draw a fashion item like **shoe, bag, shirt etc.**, then click Predict")
-
-# Drawing Canvas
+# ✅ Create drawing canvas
 canvas_result = st_canvas(
-    stroke_width=10,
-    stroke_color="white",
-    background_color="black",
-    width=280,
+    fill_color="white",  # White background
+    stroke_width=8,
+    stroke_color="black",
+    background_color="white",
     height=280,
+    width=280,
     drawing_mode="freedraw",
-    key="canvas"
+    key="canvas",
 )
 
-# Predict button
-if st.button("Predict"):
+# ✅ Predict button
+if st.button("🧠 Predict"):
     if canvas_result.image_data is not None:
-        img = canvas_result.image_data
+        # Convert canvas (RGBA) to grayscale PIL image
+        img = Image.fromarray((255 - canvas_result.image_data[:, :, 0]).astype('uint8'))  # invert so black ink = high intensity
+        img = img.convert("L").resize((28, 28))
 
-        # Convert to grayscale & preprocess
-        img = Image.fromarray((img).astype("uint8")).convert("L")   ### Grayscale
-        img = img.resize((28, 28))                                  ### Resize to model size
-        img_arr = np.array(img) / 255.0                             ### Normalize
-        img_arr = img_arr.reshape(1, 28, 28)                        ### Reshape for ANN
+        # Preprocess image for model
+        img_array = np.array(img) / 255.0
+        img_array = img_array.reshape(1, 28, 28)
 
         # Predict
-        prediction = model.predict(img_arr)
-        label = np.argmax(prediction)
-        confidence = np.max(prediction) * 100
+        predictions = model.predict(img_array)
+        pred_class = np.argmax(predictions[0])
+        confidence = np.max(predictions[0]) * 100
 
-        # Show result
-        st.write(f"### ✅ Predicted Item: **{fashion_labels[label]}**")
-        st.write(f"### 🎯 Confidence: **{confidence:.2f}%**")
-
+        st.subheader("🎯 Prediction Result:")
+        st.success(f"**Predicted Class:** {class_names[pred_class]}")
+        st.info(f"**Confidence:** {confidence:.2f}%")
     else:
-        st.warning("⚠️ Please draw something before predicting.")
+        st.warning("Please draw something before predicting!")
